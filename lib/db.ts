@@ -1,8 +1,8 @@
 import { createClient, type Client } from '@libsql/client';
 
-const QUERY_TIMEOUT_MS = 15_000;
-const RETRY_DELAY_MS = 3_000;
-const MAX_RETRIES = 2;
+const QUERY_TIMEOUT_MS = 8_000;
+const RETRY_DELAY_MS = 1_000;
+const MAX_RETRIES = 0;
 
 let _turso: Client | null = null;
 
