@@ -1,13 +1,24 @@
-import { createClient } from '@libsql/client';
+import { createClient, type Client } from '@libsql/client';
 
 const QUERY_TIMEOUT_MS = 15_000;
 const RETRY_DELAY_MS = 3_000;
 const MAX_RETRIES = 2;
 
-const turso = createClient({
-  url: process.env.TURSO_DATABASE_URL!,
-  authToken: process.env.TURSO_AUTH_TOKEN!,
-});
+let _turso: Client | null = null;
+
+function getClient(): Client {
+  if (!_turso) {
+    const url = process.env.TURSO_DATABASE_URL;
+    const authToken = process.env.TURSO_AUTH_TOKEN;
+    if (!url || !authToken) {
+      throw new Error(
+        'TURSO_DATABASE_URL and TURSO_AUTH_TOKEN environment variables are required',
+      );
+    }
+    _turso = createClient({ url, authToken });
+  }
+  return _turso;
+}
 
 export function isTimeoutError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -95,7 +106,7 @@ export async function execute(
 ) {
   return withTimeoutRetry(
     () =>
-      turso.execute({
+      getClient().execute({
         sql: stmt.sql,
         args: (stmt.args ?? []) as (string | number | null)[],
       }),
@@ -108,7 +119,7 @@ export async function batch(
   timeoutMs = QUERY_TIMEOUT_MS,
 ) {
   return withTimeoutRetry(
-    () => turso.batch(statements, 'write'),
+    () => getClient().batch(statements, 'write'),
     'batch',
     timeoutMs,
   );
