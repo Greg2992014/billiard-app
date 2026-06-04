@@ -1,0 +1,11 @@
+# Kilo configuration — игнорируем всё, кроме файлов правил
+.kilo/package.json
+.kilo/package-lock.json
+.kilo/agent-manager.json
+.kilo/node_modules/
+# Но разрешаем хранить настройки и команды:
+!.kilo/*.jsonc
+!.kilo/rules/
+!.kilo/command/
+!.kilo/agent/
+!.kilo/skill/

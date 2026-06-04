@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === Base Mobile Reset === */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  background: #0a0f0a;
+  color: #e5e7eb;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+}
+
+/* === iPhone Safe Areas === */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.safe-left {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+.safe-right {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* === Player Panel Transition === */
+.player-panel {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.player-panel.active {
+  transform: scale(1.02);
+}
+
+/* === Victory Confetti === */
+@keyframes confetti {
+  0%   { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; }
+  15%  { transform: translateY(10vh) translateX(8px) rotate(90deg); opacity: 1; }
+  30%  { transform: translateY(30vh) translateX(-12px) rotate(180deg); opacity: 1; }
+  50%  { transform: translateY(50vh) translateX(5px) rotate(270deg); opacity: 0.9; }
+  70%  { transform: translateY(70vh) translateX(-15px) rotate(450deg); opacity: 0.6; }
+  85%  { transform: translateY(90vh) translateX(10px) rotate(580deg); opacity: 0.3; }
+  100% { transform: translateY(110vh) translateX(-8px) rotate(720deg); opacity: 0; }
+}
+
+.confetti-piece {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  top: -10px;
+  animation: confetti linear forwards;
+  pointer-events: none;
+  z-index: 99999;
+}
+
+/* === Glass Card === */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* === Button Press Feedback === */
+.btn-press {
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.btn-press:active {
+  transform: scale(0.95);
+}
+
+/* === Scrollbar Hide === */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* === Turn Indicator Pulse === */
+@keyframes turn-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 185, 11, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(240, 185, 11, 0); }
+}
+
+.turn-indicator {
+  animation: turn-pulse 2s infinite;
+}
