@@ -16,5 +16,6 @@ export function mapGameRow(row: Record<string, unknown>): GameRow {
     last_updated_at: String(row.last_updated_at ?? ''),
     turn_started_at: row.turn_started_at != null ? String(row.turn_started_at) : null,
     game_time_ms: row.game_time_ms != null ? Number(row.game_time_ms) : null,
+    closed: Number(row.closed ?? 0),
   };
 }

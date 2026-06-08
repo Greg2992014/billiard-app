@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
-const PING_INTERVAL_MS = 1 * 60 * 1000; // 1 minutes
-const FIRST_PING_DELAY_MS = 10_000; // delay first ping to avoid racing with user login
+const PING_INTERVAL_MS = 60_000;
+const FIRST_PING_DELAY_MS = 10_000;
 
 /**
  * Invisible component that periodically pings the /api/health endpoint
@@ -29,7 +29,7 @@ export function KeepAlive() {
 
     const ping = () => {
       if (cancelled) return;
-      fetch('/api/health', { cache: 'no-store' }).catch(() => {
+      fetch('/api/health').catch(() => {
         // Silently ignore — best-effort keep-alive
       });
     };
@@ -38,7 +38,7 @@ export function KeepAlive() {
     // are the only ones hitting the cold database.
     const firstTimer = setTimeout(ping, FIRST_PING_DELAY_MS);
 
-    // Then ping every 2.5 minutes
+    // Then ping every minute
     const interval = setInterval(ping, PING_INTERVAL_MS);
 
     return () => {

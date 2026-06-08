@@ -5,13 +5,13 @@ export const COLOR_ORDER = ['yellow', 'green', 'brown', 'blue', 'pink', 'black']
 export type SnookerColor = typeof COLOR_ORDER[number];
 
 export const BALL_DEFS = [
-  { name: 'red' as const,    label: '🔴', points: 1, ballColor: 'red' },
-  { name: 'yellow' as const, label: '🟡', points: 2, ballColor: 'yellow' },
-  { name: 'green' as const,  label: '🟢', points: 3, ballColor: 'green' },
-  { name: 'brown' as const,  label: '🟤', points: 4, ballColor: 'brown' },
-  { name: 'blue' as const,   label: '🔵', points: 5, ballColor: 'blue' },
-  { name: 'pink' as const,   label: '🌸', points: 6, ballColor: 'pink' },
-  { name: 'black' as const,  label: '⚫', points: 7, ballColor: 'black' },
+  { name: 'red' as const,    points: 1, ballColor: 'red' },
+  { name: 'yellow' as const, points: 2, ballColor: 'yellow' },
+  { name: 'green' as const,  points: 3, ballColor: 'green' },
+  { name: 'brown' as const,  points: 4, ballColor: 'brown' },
+  { name: 'blue' as const,   points: 5, ballColor: 'blue' },
+  { name: 'pink' as const,   points: 6, ballColor: 'pink' },
+  { name: 'black' as const,  points: 7, ballColor: 'black' },
 ];
 
 export const COLOR_POINTS: Record<string, number> = Object.fromEntries(

@@ -4,10 +4,9 @@ import { useEffect, useState } from 'react';
 interface GameTimerProps {
   startTime: number;
   isActive: boolean;
-  onTimeUpdate?: (duration: number) => void;
 }
 
-export function GameTimer({ startTime, isActive, onTimeUpdate }: GameTimerProps) {
+export function GameTimer({ startTime, isActive }: GameTimerProps) {
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
@@ -16,10 +15,9 @@ export function GameTimer({ startTime, isActive, onTimeUpdate }: GameTimerProps)
     const interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       setDuration(elapsed);
-      onTimeUpdate?.(elapsed);
     }, 1000);
     return () => clearInterval(interval);
-  }, [startTime, isActive, onTimeUpdate]);
+  }, [startTime, isActive]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

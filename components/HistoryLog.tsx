@@ -15,7 +15,7 @@ export function HistoryLog({ moves, players }: HistoryLogProps) {
     const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000);
     if (diffSec < 60) return `${diffSec}с`;
     if (diffSec < 3600) return `${Math.floor(diffSec / 60)}м`;
-    return date.toLocaleTimeString();
+    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
   };
 
   const getPlayerLogin = (playerId: number) => {
@@ -63,7 +63,7 @@ export function HistoryLog({ moves, players }: HistoryLogProps) {
         const msg = isShot
           ? `забил ${ballLabel}${pointsStr}`
           : isFoul
-          ? `фол${pointsStr} ${move.move_message || ''}`
+          ? (move.move_message || `фол${pointsStr}`)
           : isDurak
           ? `дурак${pointsStr}`
           : 'сменил ход';
@@ -82,8 +82,14 @@ export function HistoryLog({ moves, players }: HistoryLogProps) {
               {isShot && ballColorKey && (
                 <BallImage color={ballColorKey} size={14} />
               )}
+              {isFoul && ballColorKey && (
+                <BallImage color={ballColorKey} size={14} />
+              )}
               {isDurak && (
                 <IconImage name="fool" size={14} />
+              )}
+              {isDurak && ballColorKey && (
+                <BallImage color={ballColorKey} size={14} />
               )}
               <span className="truncate">{msg}</span>
             </span>

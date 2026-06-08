@@ -54,7 +54,3 @@ ALTER TABLE moves DROP COLUMN game_time_ms;
 
 -- 8. Переименовываем временную колонку
 ALTER TABLE moves RENAME COLUMN player_id_new TO player_id;
-
--- 9. Добавляем move_message если её нет
--- (libsql/client на некоторых версиях падает при DROP COLUMN без ADD — раскомментируй если нужно)
--- ALTER TABLE moves ADD COLUMN move_message TEXT;

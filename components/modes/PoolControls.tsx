@@ -1,3 +1,4 @@
+'use client';
 import { BallImage } from '@/components/BallImage';
 import { IconImage } from '@/components/IconImage';
 
@@ -5,6 +6,7 @@ interface PoolControlsProps {
   onShot: (shotType: 'solid' | 'stripe' | 'black') => void;
   onOpponentBall: () => void;
   onDurak: () => void;
+  onDurakBlack: () => void;
   onEarlyBlack: () => void;
   disabled: boolean;
   isEightAllowed: boolean;
@@ -13,7 +15,7 @@ interface PoolControlsProps {
 }
 
 export function PoolControls({
-  onShot, onOpponentBall, onDurak, onEarlyBlack, disabled,
+  onShot, onOpponentBall, onDurak, onDurakBlack, onEarlyBlack, disabled,
   isEightAllowed, myGroup, myPocketed
 }: PoolControlsProps) {
   const allMyBallsDone = myGroup !== null && myPocketed >= 7;
@@ -21,11 +23,22 @@ export function PoolControls({
 
   return (
     <div className="space-y-3 w-full">
-      {/* Group status text */}
-      {myGroup && (
-        <div className="text-center text-xs sm:text-sm text-gray-400">
-          Забито: <span className="font-bold text-white">{myPocketed}</span>/7
-          {isEightAllowed && <span className="ml-1.5 text-accent-gold animate-pulse">можно бить чёрный</span>}
+      {/* Hint badge */}
+      {myGroup === null && (
+        <div className="flex items-center gap-2 px-3 py-2.5 bg-white/10 border border-white/15 rounded-xl text-sm text-gray-200 font-semibold text-center">
+          <span className="mx-auto">Выбери группу — забитый шар определяет её</span>
+        </div>
+      )}
+      {myGroup !== null && !allMyBallsDone && (
+        <div className="flex items-center gap-2 px-3 py-2.5 bg-accent-emerald/10 border border-accent-emerald/20 rounded-xl text-sm text-accent-emerald font-semibold">
+          <BallImage color={myGroup} size={18} />
+          <span>Твои: {myGroup === 'solid' ? 'сплошные' : 'полосатые'}</span>
+          <span className="ml-auto text-xs opacity-70 tabular-nums">Забито {myPocketed}/7</span>
+        </div>
+      )}
+      {allMyBallsDone && (
+        <div className="flex items-center gap-2 px-3 py-2.5 bg-accent-gold/10 border border-accent-gold/20 rounded-xl text-sm text-accent-gold font-semibold text-center">
+          <span className="mx-auto">Все свои забиты — бей чёрный!</span>
         </div>
       )}
 
@@ -35,20 +48,20 @@ export function PoolControls({
           <button
             onClick={() => onShot('solid')}
             disabled={disabled}
-            className="py-4 bg-accent-sapphire/20 border-2 border-accent-sapphire/30 rounded-2xl text-accent-sapphire text-base font-extrabold active:scale-95 disabled:opacity-30 transition-all min-h-[52px]"
+            className="py-4 bg-accent-sapphire/20 border-2 border-accent-sapphire/30 rounded-2xl text-accent-sapphire text-base font-extrabold active:scale-95 disabled:opacity-30 transition-all min-h-[56px]"
           >
             <span className="inline-flex items-center gap-2">
-              <BallImage color="solid" size={22} />
+              <BallImage color="solid" size={28} />
               <span>Сплошные</span>
             </span>
           </button>
           <button
             onClick={() => onShot('stripe')}
             disabled={disabled}
-            className="py-4 bg-accent-ruby/20 border-2 border-accent-ruby/30 rounded-2xl text-accent-ruby text-base font-extrabold active:scale-95 disabled:opacity-30 transition-all min-h-[52px]"
+            className="py-4 bg-accent-ruby/20 border-2 border-accent-ruby/30 rounded-2xl text-accent-ruby text-base font-extrabold active:scale-95 disabled:opacity-30 transition-all min-h-[56px]"
           >
             <span className="inline-flex items-center gap-2">
-              <BallImage color="stripe" size={22} />
+              <BallImage color="stripe" size={28} />
               <span>Полосатые</span>
             </span>
           </button>
@@ -57,88 +70,76 @@ export function PoolControls({
         <button
           onClick={() => onShot(myGroup)}
           disabled={disabled}
-          className="w-full py-4 bg-accent-emerald/15 border-2 border-accent-emerald/30 rounded-2xl text-accent-emerald text-base sm:text-lg font-extrabold active:scale-95 disabled:opacity-30 transition-all min-h-[52px] sm:min-h-[56px]"
+          className="w-full py-4 bg-accent-emerald/15 border-2 border-accent-emerald/30 rounded-2xl text-accent-emerald text-base sm:text-lg font-extrabold active:scale-95 disabled:opacity-30 transition-all min-h-[56px]"
         >
           <span className="inline-flex items-center gap-2">
-            <BallImage color={myGroup} size={22} />
+            <BallImage color={myGroup} size={28} />
             <span>Забил свой ({myGroup === 'solid' ? 'сплошной' : 'полосатый'})</span>
           </span>
         </button>
-      ) : (
-        <div className="text-center text-sm text-accent-gold py-2 font-bold">
-          Все свои забиты — бей чёрный!
-        </div>
-      )}
+      ) : null}
 
-      {/* Black ball button */}
-      {isEightAllowed && (
+      {/* Bottom row: Чужой / Дурак / Чёрный */}
+      <div className="flex gap-4 justify-center pt-1">
+        {/* Чужой шар — работает и в концовке (фол — забил соперника вместо чёрного) */}
+        {myGroup !== null && (
+          <button
+            onClick={onOpponentBall}
+            disabled={disabled}
+            className="flex flex-col items-center gap-1 group"
+          >
+            <span className="w-16 h-16 rounded-full bg-purple-500/15 border-2 border-purple-500/30 flex items-center justify-center group-active:scale-90 transition-all disabled:opacity-30">
+              {opponentGroup ? <BallImage color={opponentGroup} size={26} /> : <IconImage name="wrong" size={26} />}
+            </span>
+            <span className="text-[10px] text-purple-500/60 font-medium">Чужой</span>
+          </button>
+        )}
+
+        {/* Дурак: до 7 = случайно свой, после 7 = случайно чёрный (победа) */}
         <button
-          onClick={() => onShot('black')}
+          onClick={allMyBallsDone ? onDurakBlack : onDurak}
           disabled={disabled}
-          className="w-full py-4 bg-black/40 border-2 border-white/20 rounded-2xl text-white text-base sm:text-lg font-extrabold active:scale-95 disabled:opacity-30 transition-all min-h-[52px] sm:min-h-[56px] shadow-inner"
+          className="flex flex-col items-center gap-1 group"
         >
-          <span className="inline-flex items-center gap-2">
-            <BallImage color="black" size={22} />
-            <span>Чёрный шар (победа)</span>
+          <span className={`w-16 h-16 rounded-full border-2 flex items-center justify-center group-active:scale-90 transition-all disabled:opacity-30 ${
+            allMyBallsDone
+              ? 'bg-accent-gold/15 border-accent-gold/30'
+              : 'bg-accent-gold/15 border-accent-gold/30'
+          }`}>
+            <IconImage name="fool" size={26} />
+          </span>
+          <span className={`text-[10px] font-medium ${
+            allMyBallsDone ? 'text-accent-gold/60' : 'text-accent-gold/60'
+          }`}>
+            {allMyBallsDone ? 'Дурак (победа)' : 'Дурак'}
           </span>
         </button>
-      )}
 
-      {/* Early black button */}
+        {/* Чёрный (победа) */}
+        {isEightAllowed && (
+          <button
+            onClick={() => onShot('black')}
+            disabled={disabled}
+            className="flex flex-col items-center gap-1 group"
+          >
+            <span className="w-16 h-16 rounded-full bg-black/40 border-2 border-white/20 flex items-center justify-center group-active:scale-90 transition-all disabled:opacity-30 shadow-inner">
+              <BallImage color="black" size={26} />
+            </span>
+            <span className="text-[10px] text-gray-400 font-medium">Чёрный</span>
+          </button>
+        )}
+      </div>
+
+      {/* Early black button — only when NOT allowed */}
       {myGroup && !isEightAllowed && (
         <button
           onClick={onEarlyBlack}
           disabled={disabled}
-          className="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-400 font-medium active:scale-95 disabled:opacity-30 transition-all min-h-[44px]"
+          className="w-full py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-400 font-medium active:scale-95 disabled:opacity-30 transition-all"
         >
           <span className="inline-flex items-center gap-2">
             <BallImage color="black" size={18} />
             <span>Чёрный досрочно (поражение)</span>
-          </span>
-        </button>
-      )}
-
-      {/* Opponent ball / durak row */}
-      {myGroup !== null && (
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <button
-            onClick={onOpponentBall}
-            disabled={disabled || allMyBallsDone}
-            className="flex-1 py-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-sm text-purple-400 font-semibold active:scale-95 disabled:opacity-30 transition-all min-h-[44px]"
-          >
-            <span className="inline-flex items-center gap-1.5">
-              {opponentGroup && <BallImage color={opponentGroup} size={18} />}
-              <span>Чужой шар (фол)</span>
-            </span>
-          </button>
-          <button
-            onClick={onDurak}
-            disabled={disabled || allMyBallsDone}
-            className="flex-1 py-3 bg-accent-gold/10 border border-accent-gold/20 rounded-xl text-sm text-accent-gold font-bold active:scale-95 disabled:opacity-30 transition-all min-h-[44px]"
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <IconImage name="fool" size={18} />
-              <span>Дурак</span>
-            </span>
-          </button>
-        </div>
-      )}
-      {/* Hint when durak/foul are blocked */}
-      {myGroup !== null && allMyBallsDone && (
-        <div className="text-center text-[10px] text-gray-600">
-          Шары своей группы забиты — бей чёрный
-        </div>
-      )}
-
-      {myGroup === null && (
-        <button
-          onClick={onDurak}
-          disabled={disabled}
-          className="w-full py-3 bg-accent-gold/10 border border-accent-gold/20 rounded-xl text-sm text-accent-gold font-bold active:scale-95 disabled:opacity-30 transition-all min-h-[44px]"
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <IconImage name="fool" size={18} />
-            <span>Дурак</span>
           </span>
         </button>
       )}

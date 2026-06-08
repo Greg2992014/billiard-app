@@ -12,7 +12,7 @@ html {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-  background: #0a0f0a;
+  background: #0a1a0f;
   color: #e5e7eb;
   min-height: 100dvh;
   min-height: -webkit-fill-available;
@@ -30,14 +30,6 @@ body {
 }
 .safe-right {
   padding-right: env(safe-area-inset-right, 0px);
-}
-
-/* === Player Panel Transition === */
-.player-panel {
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.player-panel.active {
-  transform: scale(1.02);
 }
 
 /* === Victory Confetti === */
@@ -67,14 +59,6 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* === Button Press Feedback === */
-.btn-press {
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-.btn-press:active {
-  transform: scale(0.95);
 }
 
 /* === Scrollbar Hide === */

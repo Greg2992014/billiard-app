@@ -1,9 +1,9 @@
 import { IconImage } from '@/components/IconImage';
 
 const GAME_MODES = [
+  { value: 'snooker' as const, label: 'Снукер', iconKey: 'snooker_mode' as const, desc: '15 красных + цвета' },
   { value: 'pool' as const, label: 'Пул', iconKey: 'pool_mode' as const, desc: '8-ball' },
   { value: 'russian' as const, label: 'Русский', iconKey: 'piramid' as const, desc: 'Пирамида' },
-  { value: 'snooker' as const, label: 'Снукер', iconKey: 'start' as const, desc: '15 красных + цвета' },
 ];
 
 const MODE_ICON_SIZE = 32;

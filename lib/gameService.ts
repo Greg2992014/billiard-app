@@ -24,6 +24,7 @@ export interface GameRow {
   last_updated_at: string;
   turn_started_at: string | null;
   game_time_ms: number | null;
+  closed: number;
 }
 
 export async function getGame(roomId: string) {

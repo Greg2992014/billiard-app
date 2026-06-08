@@ -23,7 +23,7 @@ function renderRulesText(text: string): React.ReactNode {
 function RulesIcon({ gameType }: { gameType: 'pool' | 'russian' | 'snooker' }) {
   if (gameType === 'pool') return <IconImage name="pool_mode" size={36} />;
   if (gameType === 'russian') return <IconImage name="piramid" size={36} />;
-  return <IconImage name="start" size={36} />;
+  if (gameType === 'snooker') return <IconImage name="snooker_mode" size={36} />;
 }
 
 interface GameRulesModalProps {
@@ -120,7 +120,7 @@ export function GameRulesModal({ gameType, isOpen, onClose }: GameRulesModalProp
         <div className="overflow-y-auto px-6 pb-6 space-y-5 no-scrollbar">
           {rules.sections.map((section, idx) => (
             <div key={idx} className="space-y-2">
-              <h3 className="text-sm font-bold text-accent-gold">{section.title}</h3>
+              <h3 className="text-sm font-bold text-accent-gold">{renderRulesText(section.title)}</h3>
               <ul className="space-y-1.5">
                 {section.items.map((item, i) => {
                   const isSubItem = item.startsWith('•') || item.startsWith('   ');

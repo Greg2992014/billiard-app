@@ -1,5 +1,6 @@
 import type { SnookerState } from '@/lib/gameLogic';
 import { processSnookerShot } from '@/lib/gameLogic';
+import { COLOR_NAMES_RU } from '@/lib/constants';
 import type { MoveContext, MoveEffect, MoveParams } from './types';
 
 export default function durakSnooker(
@@ -55,7 +56,7 @@ export default function durakSnooker(
     newCurrentTurn: currentTurn,
     newStatus,
     newWinner,
-    moveMessage: `Дурак! Забит ${ballColor} (+${result.points})`,
+    moveMessage: `Дурак! Забит ${COLOR_NAMES_RU[ballColor] || ballColor} (+${result.points})`,
     storedBallColor: ballColor,
   };
 }

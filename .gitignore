@@ -3,3 +3,17 @@ node_modules
 .env.local
 .DS_Store
 *.log
+.vercel
+tsconfig.tsbuildinfo
+
+# Kilo IDE config
+.kilo/
+kilo.json
+AGENTS.md
+
+# E2E tests
+e2e/
+test-results/
+
+# Docs
+snooker_rules.pdf

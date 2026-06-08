@@ -1,11 +1,13 @@
 import { GAME_TYPE_NAMES } from '@/lib/constants';
+import Link from 'next/link';
 import type { RecentGame } from '@/lib/types';
 
 interface RecentGamesProps {
   games: RecentGame[];
+  onClose?: (roomId: string) => void;
 }
 
-export function RecentGames({ games }: RecentGamesProps) {
+export function RecentGames({ games, onClose }: RecentGamesProps) {
   return (
     <div className="glass rounded-2xl p-4 animate-fade-in">
       <h2 className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">
@@ -32,12 +34,23 @@ export function RecentGames({ games }: RecentGamesProps) {
                 </div>
               </div>
               {isActive && (
-                <a
-                  href={`/game/${g.room_id}`}
-                  className="ml-3 px-3 py-1.5 bg-accent-emerald/15 text-accent-emerald border border-accent-emerald/30 rounded-lg text-[10px] font-bold whitespace-nowrap active:scale-95 transition-all"
-                >
-                  Вернуться
-                </a>
+                <div className="flex items-center gap-1.5 ml-2">
+                  <Link
+                    href={`/game/${g.room_id}`}
+                    className="px-3 py-1.5 bg-accent-emerald/15 text-accent-emerald border border-accent-emerald/30 rounded-lg text-[10px] font-bold whitespace-nowrap active:scale-95 transition-all"
+                  >
+                    Вернуться
+                  </Link>
+                  <button
+                    onClick={async () => {
+                      await fetch(`/api/game/${g.room_id}/close`, { method: 'POST' });
+                      onClose?.(g.room_id);
+                    }}
+                    className="px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] text-gray-400 whitespace-nowrap active:scale-95 transition-all"
+                  >
+                    Закрыть
+                  </button>
+                </div>
               )}
             </div>
           );

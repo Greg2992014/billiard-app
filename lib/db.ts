@@ -1,8 +1,9 @@
 import { createClient, type Client } from '@libsql/client';
 
 const QUERY_TIMEOUT_MS = 8_000;
+const BATCH_TIMEOUT_MS = 12_000;
 const RETRY_DELAY_MS = 1_000;
-const MAX_RETRIES = 0;
+const MAX_RETRIES = 1;
 
 let _turso: Client | null = null;
 
@@ -114,9 +115,28 @@ export async function execute(
   );
 }
 
+let migrationsApplied = false;
+
+export async function ensureMigrations(): Promise<void> {
+  if (migrationsApplied) return;
+
+  try {
+    const cols = await execute({ sql: "PRAGMA table_info(games)" });
+    const hasClosed = cols.rows.some((r: Record<string, unknown>) => r.name === 'closed');
+    if (!hasClosed) {
+      await execute({ sql: 'ALTER TABLE games ADD COLUMN closed INTEGER DEFAULT 0' });
+      console.log('[db] Applied migration: added games.closed column');
+    }
+    migrationsApplied = true;
+  } catch (e) {
+    console.warn('[db] Migration check failed (non-fatal):', e);
+    migrationsApplied = true; // don't retry every request
+  }
+}
+
 export async function batch(
   statements: { sql: string; args: (string | number | null)[] }[],
-  timeoutMs = QUERY_TIMEOUT_MS,
+  timeoutMs = BATCH_TIMEOUT_MS,
 ) {
   return withTimeoutRetry(
     () => getClient().batch(statements, 'write'),

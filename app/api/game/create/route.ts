@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
       case 'snooker': gameState = JSON.stringify(initialSnookerState); break;
       case 'pool': gameState = JSON.stringify(initialPoolState); break;
       case 'russian': gameState = JSON.stringify(initialRussianState); break;
-      default: return NextResponse.json({ error: 'Unknown game type' }, { status: 400 });
     }
 
     await execute({

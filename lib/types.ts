@@ -25,4 +25,5 @@ export interface RecentGame {
   current_turn: string;
   left_login: string;
   right_login: string;
+  closed?: number;
 }

@@ -23,6 +23,8 @@ const ICON_SRC: Record<string, string> = {
   wrong:    '/images/other/wrong.svg',
   money:    '/images/other/money.svg',
   pool_mode:'/images/other/pool_mode.svg',
+  snooker_mode:'/images/other/snooker_mode.svg',
+  target:   '/images/other/target.svg',
 };
 
 export type IconName = keyof typeof ICON_SRC;

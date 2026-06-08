@@ -7,11 +7,17 @@ import { GameTypeSelector } from '@/components/GameTypeSelector';
 import { PlayerCreator } from '@/components/PlayerCreator';
 import { RecentGames } from '@/components/RecentGames';
 
+const MODE_ICONS: Record<string, 'snooker_mode' | 'pool_mode' | 'piramid'> = {
+  snooker: 'snooker_mode',
+  pool: 'pool_mode',
+  russian: 'piramid',
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [userLogin, setUserLogin] = useState<string>('');
-  const [gameType, setGameType] = useState<'pool' | 'russian' | 'snooker'>('pool');
+  const [gameType, setGameType] = useState<'pool' | 'russian' | 'snooker'>('snooker');
   const [rightLogin, setRightLogin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -45,6 +51,16 @@ export default function DashboardPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.games) setRecentGames(data.games.slice(0, 5));
+      })
+      .catch(() => {});
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`/api/game/last-opponent?userId=${userId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.opponentLogin) setRightLogin(data.opponentLogin);
       })
       .catch(() => {});
   }, [userId]);
@@ -96,7 +112,39 @@ export default function DashboardPage() {
     router.push('/login');
   };
 
-  if (!userId) return null;
+  const handleCloseGame = (roomId: string) => {
+    setRecentGames((prev) => prev.filter((g) => g.room_id !== roomId));
+  };
+
+  if (!userId) return (
+    <div className="min-h-dvh bg-gradient-to-b from-felt-800 via-felt-900 to-felt-800 px-4 py-6">
+      <div className="max-w-md mx-auto space-y-4">
+        <div className="flex items-center justify-between mb-2">
+          <div />
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-10 h-10 bg-white/5 rounded-full animate-pulse" />
+            <div className="h-6 w-32 bg-white/5 rounded-lg animate-pulse" />
+            <div className="h-4 w-48 bg-white/5 rounded-lg animate-pulse" />
+          </div>
+          <div className="h-8 w-14 bg-white/5 rounded-lg animate-pulse" />
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {[1,2,3].map(i => (
+            <div key={i} className="h-14 bg-white/5 rounded-xl animate-pulse" />
+          ))}
+        </div>
+        <div className="glass rounded-2xl p-4 space-y-3">
+          <div className="h-4 w-24 bg-white/5 rounded animate-pulse" />
+          <div className="h-14 bg-white/5 rounded-xl animate-pulse" />
+        </div>
+        <div className="glass rounded-2xl p-4 space-y-3">
+          <div className="h-4 w-24 bg-white/5 rounded animate-pulse" />
+          <div className="h-14 bg-white/5 rounded-xl animate-pulse" />
+        </div>
+        <div className="h-14 bg-white/5 rounded-2xl animate-pulse" />
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-dvh bg-gradient-to-b from-felt-800 via-felt-900 to-felt-800 px-4 py-6">
@@ -104,7 +152,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-2 animate-slide-down">
           <div />
           <div className="text-center">
-            <div className="mb-1 flex justify-center"><IconImage name="pool_mode" size={40} /></div>
+            <div className="mb-1 flex justify-center"><IconImage name={MODE_ICONS[gameType]} size={40} /></div>
             <h1 className="text-xl font-bold text-white">Новая игра</h1>
             <p className="text-sm text-gray-400">{userLogin}, выбери режим и соперника</p>
           </div>
@@ -186,7 +234,7 @@ export default function DashboardPage() {
           </button>
         </form>
 
-        {recentGames.length > 0 && <RecentGames games={recentGames} />}
+        {recentGames.length > 0 && <RecentGames games={recentGames} onClose={handleCloseGame} />}
       </div>
     </div>
   );

@@ -35,7 +35,7 @@ export default function LoginPage() {
     <div className="flex min-h-dvh items-center justify-center bg-gradient-to-b from-felt-800 via-felt-900 to-felt-800 px-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm glass rounded-2xl p-6 animate-scale-in">
         <div className="text-center mb-6">
-          <div className="mb-2 flex justify-center"><IconImage name="pool_mode" size={48} /></div>
+          <div className="mb-2 flex justify-center"><IconImage name="target" size={48} /></div>
           <h1 className="text-2xl font-bold text-white">Billiard Score</h1>
           <p className="text-sm text-gray-400 mt-1">Вход в аккаунт</p>
         </div>

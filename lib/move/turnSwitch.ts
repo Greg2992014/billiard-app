@@ -10,7 +10,11 @@ export default function turnSwitch(ctx: MoveContext, _params: MoveParams): MoveE
   if (gameType === 'snooker') {
     const snookerState = newGameState as SnookerState;
     if (snookerState.phase === 'normal') {
-      newGameState = { ...snookerState, requiredBallType: 'red' as const };
+      if (snookerState.reds === 0) {
+        newGameState = { ...snookerState, phase: 'colors' as const, requiredBallType: 'color' as const };
+      } else {
+        newGameState = { ...snookerState, requiredBallType: 'red' as const };
+      }
     }
   }
 

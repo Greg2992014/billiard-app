@@ -1,5 +1,5 @@
 // lib/gameLogic.ts
-import { COLOR_ORDER, COLOR_POINTS } from '@/lib/constants';
+import { COLOR_ORDER, COLOR_POINTS, COLOR_NAMES_RU } from '@/lib/constants';
 
 export interface SnookerState {
   type: 'snooker';
@@ -69,7 +69,7 @@ export function processSnookerShot(
     else if (newState.requiredBallType === 'color' && ballColor === 'red') foul = true;
   } else {
     const nextColor = getNextColorInOrder(newState);
-    if (ballColor !== nextColor) foul = true;
+    if (nextColor === null || ballColor !== nextColor) foul = true;
   }
 
   if (foul) {
@@ -106,11 +106,11 @@ export function processSnookerShot(
         newState.requiredBallType = 'red';
       }
       turnSwitch = false;
-      moveMessage = `Забит ${ballColor} (+${points})`;
+      moveMessage = `Забит ${COLOR_NAMES_RU[ballColor] || ballColor} (+${points})`;
     } else {
       newState.colors[colorKey] = 0;
       turnSwitch = false;
-      moveMessage = `Забит ${ballColor} (+${points})`;
+      moveMessage = `Забит ${COLOR_NAMES_RU[ballColor] || ballColor} (+${points})`;
       const allColorsGone = COLOR_ORDER.every(c => newState.colors[c] === 0);
       if (allColorsGone) {
         gameOver = true;
@@ -127,7 +127,10 @@ function foulValueForState(state: SnookerState, ballColor: string): number {
   const foulValue = (color: string) => Math.max(4, COLOR_POINTS[color] || 0);
 
   const ballOnValue = state.phase === 'colors'
-    ? COLOR_ORDER.reduce((v, c) => state.colors[c] === 1 ? foulValue(c) : v, 4)
+    ? (() => {
+        const firstAvailable = COLOR_ORDER.find(c => state.colors[c] === 1);
+        return firstAvailable ? foulValue(firstAvailable) : 4;
+      })()
     : 4;
 
   return Math.max(4, ballOnValue, foulValue(ballColor));
@@ -211,7 +214,6 @@ export function processPoolShot(
     message = `Забит ${shotType === 'solid' ? 'сплошной' : 'полосатый'}`;
 
   } else {
-    // Defensive fallback — normally intercepted by poolShot.ts before reaching here
     foul = true;
     turnSwitch = true;
     message = `Фол: забит чужой шар`;
@@ -231,6 +233,24 @@ export const initialRussianState: RussianState = {
   target: 8,
 };
 
+export function applyRussianPocket(
+  player: 'left' | 'right',
+  state: RussianState,
+): {
+  newState: RussianState;
+  winner: 'left' | 'right' | null;
+} {
+  const newState: RussianState = { ...state };
+  if (player === 'left') newState.ballsLeft++;
+  else newState.ballsRight++;
+
+  let winner: 'left' | 'right' | null = null;
+  if (newState.ballsLeft >= newState.target) winner = 'left';
+  else if (newState.ballsRight >= newState.target) winner = 'right';
+
+  return { newState, winner };
+}
+
 export function processRussianShot(
   player: 'left' | 'right',
   state: RussianState
@@ -241,20 +261,12 @@ export function processRussianShot(
   winner: 'left' | 'right' | null;
   message: string;
 } {
-  const newState: RussianState = { ...state };
-  let winner: 'left' | 'right' | null = null;
-
-  if (player === 'left') newState.ballsLeft++;
-  else newState.ballsRight++;
-
-  if (newState.ballsLeft >= newState.target) winner = 'left';
-  else if (newState.ballsRight >= newState.target) winner = 'right';
-
+  const result = applyRussianPocket(player, state);
   return {
-    newState,
+    newState: result.newState,
     points: 1,
     turnSwitch: false,
-    winner,
+    winner: result.winner,
     message: `Забит шар (+1)`,
   };
 }

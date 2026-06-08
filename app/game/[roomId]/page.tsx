@@ -10,6 +10,9 @@ import { RulesButton } from '@/components/GameRulesModal';
 import { RussianControls } from '@/components/modes/RussianControls';
 import { PoolControls } from '@/components/modes/PoolControls';
 import { SnookerControls } from '@/components/modes/SnookerControls';
+import { SnookerStateEditor } from '@/components/modes/SnookerStateEditor';
+import { PoolScoreEditor } from '@/components/modes/PoolScoreEditor';
+import { RussianScoreEditor } from '@/components/modes/RussianScoreEditor';
 import type { SnookerState, PoolState, RussianState } from '@/lib/gameLogic';
 import { POLL_INTERVAL_MS } from '@/lib/constants';
 import type { HistoryLogMove } from '@/lib/types';
@@ -62,6 +65,9 @@ export default function GamePage() {
   const [gameStartTime, setGameStartTime] = useState<number>(Date.now());
   const [turnStartTime, setTurnStartTime] = useState<number>(Date.now());
   const [showHistory, setShowHistory] = useState(false);
+  const [showStateEditor, setShowStateEditor] = useState(false);
+  const [showPoolScoreEditor, setShowPoolScoreEditor] = useState(false);
+  const [showRussianScoreEditor, setShowRussianScoreEditor] = useState(false);
   const [scoreAnimLeft, setScoreAnimLeft] = useState(false);
   const [scoreAnimRight, setScoreAnimRight] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -171,8 +177,161 @@ export default function GamePage() {
   const handleFoul = (foulPoints?: number) =>
     handleMove({ playerId: getPlayerId(ct), moveType: 'foul', foulPoints });
 
+  const handleFoulBall = (ballColor: string) =>
+    handleMove({ playerId: getPlayerId(ct), moveType: 'foul', ballColor });
+
   const handleDurak = (ballColor?: string) =>
     handleMove({ playerId: getPlayerId(ct), moveType: 'durak', ballColor });
+
+  const handleDurakBlack = () =>
+    handleMove({ playerId: getPlayerId(ct), moveType: 'durak', ballColor: 'black' });
+
+  const handleAdjustState = async (newReds: number, newColors: Record<string, number>, newScoreLeft: number, newScoreRight: number) => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setProcessing(true);
+    try {
+      const res = await fetch(`/api/game/${roomId}/adjust-state`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId: getPlayerId(ct), reds: newReds, colors: newColors, totalShotsLeft: newScoreLeft, totalShotsRight: newScoreRight }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setGameState((prev) => prev ? {
+          ...prev,
+          status: data.status,
+          currentTurn: data.currentTurn,
+          winnerId: data.winnerId,
+          gameState: data.gameState,
+          players: {
+            left: { ...prev.players.left, score: data.totalShotsLeft },
+            right: { ...prev.players.right, score: data.totalShotsRight },
+          },
+        } : prev);
+        setShowStateEditor(false);
+      } else {
+        setErrorMsg(data.error);
+      }
+    } catch (_) {
+      setErrorMsg('Ошибка сети. Попробуйте ещё раз.');
+    } finally {
+      processingRef.current = false;
+      setProcessing(false);
+    }
+  };
+
+  const handleAdjustScore = async (newScoreLeft: number, newScoreRight: number, onSuccess: () => void) => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setProcessing(true);
+    try {
+      const res = await fetch(`/api/game/${roomId}/adjust-score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId: getPlayerId(ct), totalShotsLeft: newScoreLeft, totalShotsRight: newScoreRight }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setGameState((prev) => prev ? {
+          ...prev,
+          players: {
+            left: { ...prev.players.left, score: data.totalShotsLeft },
+            right: { ...prev.players.right, score: data.totalShotsRight },
+          },
+        } : prev);
+        onSuccess();
+      } else {
+        setErrorMsg(data.error);
+      }
+    } catch (_) {
+      setErrorMsg('Ошибка сети. Попробуйте ещё раз.');
+    } finally {
+      processingRef.current = false;
+      setProcessing(false);
+    }
+  };
+
+  const handleAdjustPoolState = async (newScoreLeft: number, newScoreRight: number, pocketedSolids: number, pocketedStripes: number) => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setProcessing(true);
+    try {
+      const res = await fetch(`/api/game/${roomId}/adjust-pool-state`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerId: getPlayerId(ct),
+          pocketedSolids,
+          pocketedStripes,
+          totalShotsLeft: newScoreLeft,
+          totalShotsRight: newScoreRight,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && !data.noChange) {
+        setGameState((prev) => prev ? {
+          ...prev,
+          gameState: data.gameState,
+          players: {
+            left: { ...prev.players.left, score: data.totalShotsLeft },
+            right: { ...prev.players.right, score: data.totalShotsRight },
+          },
+        } : prev);
+        setShowPoolScoreEditor(false);
+      } else if (data.noChange) {
+        setShowPoolScoreEditor(false);
+      } else {
+        setErrorMsg(data.error);
+      }
+    } catch (_) {
+      setErrorMsg('Ошибка сети. Попробуйте ещё раз.');
+    } finally {
+      processingRef.current = false;
+      setProcessing(false);
+    }
+  };
+
+  const handleAdjustRussianState = async (newScoreLeft: number, newScoreRight: number, ballsLeft: number, ballsRight: number, target: number) => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setProcessing(true);
+    try {
+      const res = await fetch(`/api/game/${roomId}/adjust-russian-state`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerId: getPlayerId(ct),
+          ballsLeft,
+          ballsRight,
+          target,
+          totalShotsLeft: newScoreLeft,
+          totalShotsRight: newScoreRight,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && !data.noChange) {
+        setGameState((prev) => prev ? {
+          ...prev,
+          gameState: data.gameState,
+          players: {
+            left: { ...prev.players.left, score: data.totalShotsLeft },
+            right: { ...prev.players.right, score: data.totalShotsRight },
+          },
+        } : prev);
+        setShowRussianScoreEditor(false);
+      } else if (data.noChange) {
+        setShowRussianScoreEditor(false);
+      } else {
+        setErrorMsg(data.error);
+      }
+    } catch (_) {
+      setErrorMsg('Ошибка сети. Попробуйте ещё раз.');
+    } finally {
+      processingRef.current = false;
+      setProcessing(false);
+    }
+  };
 
   const handleOpponentBall = () => {
     if (gameState!.gameState?.type !== 'pool') return;
@@ -246,7 +405,20 @@ export default function GamePage() {
 
   const { gameType, currentTurn, status } = gameState;
   const players = gameState.players;
-  if (!players) return null;
+  if (!players) return (
+    <div className="flex items-center justify-center min-h-dvh bg-felt-900">
+      <div className="text-center">
+        <div className="mb-3 flex justify-center"><IconImage name="fail" size={40} /></div>
+        <div className="text-gray-400">Не удалось загрузить данные игроков</div>
+        <button
+          onClick={() => { setLoading(true); fetchGameState(); }}
+          className="mt-4 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-gray-300 active:scale-95 transition-all"
+        >
+          Повторить
+        </button>
+      </div>
+    </div>
+  );
   const modeState = gameState.gameState;
 
   const snookerState = modeState?.type === 'snooker' ? modeState as SnookerState : null;
@@ -260,9 +432,9 @@ export default function GamePage() {
     const scoreAnim = side === 'left' ? scoreAnimLeft : scoreAnimRight;
 
     return (
-      <div className="flex sm:flex-col items-center gap-2 sm:gap-0 sm:px-2 sm:py-4">
+      <div className="flex sm:flex-col items-center gap-2 sm:gap-0 sm:px-3 sm:py-5">
         {/* Avatar */}
-        <div className={`w-9 h-9 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-sm sm:text-xl font-bold shrink-0 transition-all duration-500 ${
+        <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-sm sm:text-4xl font-bold shrink-0 transition-all duration-500 ${
           isActive
             ? 'bg-accent-gold/20 text-accent-gold ring-2 ring-accent-gold/50 turn-indicator'
             : 'bg-white/5 text-gray-400'
@@ -272,12 +444,12 @@ export default function GamePage() {
 
         {/* Name + Score — stacked vertically on desktop, inline on mobile */}
         <div className="flex sm:flex-col items-center gap-1.5 sm:gap-0 min-w-0">
-          <div className={`text-xs sm:text-sm font-semibold truncate max-w-[60px] sm:max-w-[80px] text-center transition-colors ${
+          <div className={`text-xl sm:text-base font-semibold truncate max-w-[90px] sm:max-w-[110px] text-center transition-colors ${
             isActive ? 'text-white' : 'text-gray-400'
           }`}>
             {player.login}
           </div>
-          <div className={`text-lg sm:text-4xl font-extrabold transition-all duration-300 leading-none ${
+          <div className={`text-2xl sm:text-7xl font-extrabold transition-all duration-300 leading-none ${
             isActive ? 'text-white' : 'text-gray-500'
           } ${scoreAnim ? 'animate-score-pop text-accent-gold' : ''}`}>
             {player.score}
@@ -285,7 +457,7 @@ export default function GamePage() {
         </div>
 
         {/* Desktop-only label */}
-        <div className="hidden sm:block text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider">
+        <div className="hidden sm:block text-xs text-gray-500 mt-0.5 uppercase tracking-wider">
           {gameType === 'snooker' ? 'очки' : 'забито'}
         </div>
 
@@ -432,6 +604,7 @@ export default function GamePage() {
           onShot={(st) => handleShot(st)}
           onOpponentBall={handleOpponentBall}
           onDurak={() => handleDurak()}
+          onDurakBlack={handleDurakBlack}
           onEarlyBlack={() => handleShot('black')}
           disabled={processing}
           isEightAllowed={poolData.isBlackAllowed}
@@ -444,6 +617,7 @@ export default function GamePage() {
         <SnookerControls
           onShot={(color) => handleShot(undefined, color)}
           onFoul={(pts) => handleFoul(pts)}
+          onFoulBall={(color) => handleFoulBall(color)}
           onDurak={(color) => handleDurak(color)}
           disabled={processing}
           requiredBallType={snookerData.requiredBallType}
@@ -469,6 +643,36 @@ export default function GamePage() {
             {gameType === 'snooker' ? 'Снукер' : gameType === 'russian' ? 'Пирамида' : 'Пул'}
           </div>
           <RulesButton gameType={gameType as 'pool' | 'russian' | 'snooker'} />
+          {gameType === 'snooker' && (
+            <button
+              onClick={() => setShowStateEditor(true)}
+              disabled={processing || status !== 'active'}
+              className="p-1.5 rounded-full bg-white/5 border border-white/10 text-gray-400 active:scale-95 disabled:opacity-30 transition-all hover:text-white hover:border-white/20"
+              title="Ручная настройка"
+            >
+              <IconImage name="sections" size={14} />
+            </button>
+          )}
+          {gameType === 'pool' && (
+            <button
+              onClick={() => setShowPoolScoreEditor(true)}
+              disabled={processing || status !== 'active'}
+              className="p-1.5 rounded-full bg-white/5 border border-white/10 text-gray-400 active:scale-95 disabled:opacity-30 transition-all hover:text-white hover:border-white/20"
+              title="Изменить счёт"
+            >
+              <IconImage name="sections" size={14} />
+            </button>
+          )}
+          {gameType === 'russian' && (
+            <button
+              onClick={() => setShowRussianScoreEditor(true)}
+              disabled={processing || status !== 'active'}
+              className="p-1.5 rounded-full bg-white/5 border border-white/10 text-gray-400 active:scale-95 disabled:opacity-30 transition-all hover:text-white hover:border-white/20"
+              title="Изменить счёт"
+            >
+              <IconImage name="sections" size={14} />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-gray-500">
           <IconImage name="clock_v2" size={14} />
@@ -533,27 +737,24 @@ export default function GamePage() {
 
           {/* Scrollable controls area */}
           <div className="flex-1 overflow-y-auto px-3 sm:px-3 pb-2 w-full flex flex-col items-center justify-center gap-3">
+            {/* Turn Switch — round, prominent, above controls */}
+            <button
+              onClick={handleSwitchTurn}
+              disabled={processing || status !== 'active'}
+              className="w-32 h-32 sm:w-28 sm:h-28 rounded-full bg-accent-gold/20 border-[4px] border-accent-gold/40 flex items-center justify-center text-accent-gold active:scale-95 disabled:opacity-30 disabled:active:scale-100 transition-all hover:bg-accent-gold/25 shadow-xl shadow-accent-gold/10"
+              title="Смена хода — промах / передача"
+            >
+              <IconImage name="repeat" size={36} />
+            </button>
+            <div className="text-center -mt-1">
+              <span className="text-xs text-accent-gold/60 font-medium">Промах / передача хода</span>
+            </div>
+
             {/* Mode-specific controls */}
             <div className="w-full sm:max-w-sm">
               {renderControls()}
             </div>
 
-            {/* Turn Switch */}
-            <div className="w-full sm:max-w-sm pt-2">
-              <button
-                onClick={handleSwitchTurn}
-                disabled={processing || status !== 'active'}
-                className="w-full py-5 sm:py-6 bg-accent-gold/15 border-2 border-accent-gold/40 rounded-2xl flex items-center justify-center gap-3 text-accent-gold active:scale-95 disabled:opacity-30 disabled:active:scale-100 transition-all min-h-[64px] sm:min-h-[72px] hover:bg-accent-gold/20 shadow-lg shadow-accent-gold/5"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <IconImage name="repeat" size={24} />
-                  <span>Смена хода</span>
-                </span>
-              </button>
-              <div className="text-center mt-1.5">
-                <span className="text-[10px] text-gray-600">Промах / передача хода</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -603,6 +804,44 @@ export default function GamePage() {
             players={players}
           />
         </div>
+      )}
+
+      {showStateEditor && snookerState && (
+        <SnookerStateEditor
+          reds={snookerState.reds}
+          colors={snookerState.colors}
+          phase={snookerState.phase}
+          scoreLeft={gameState?.players?.left?.score ?? 0}
+          scoreRight={gameState?.players?.right?.score ?? 0}
+          onApply={handleAdjustState}
+          onClose={() => setShowStateEditor(false)}
+          disabled={processing}
+        />
+      )}
+
+      {showPoolScoreEditor && (
+        <PoolScoreEditor
+          scoreLeft={gameState?.players?.left?.score ?? 0}
+          scoreRight={gameState?.players?.right?.score ?? 0}
+          pocketedSolids={(poolState?.pocketedSolids) ?? 0}
+          pocketedStripes={(poolState?.pocketedStripes) ?? 0}
+          onApply={handleAdjustPoolState}
+          onClose={() => setShowPoolScoreEditor(false)}
+          disabled={processing}
+        />
+      )}
+
+      {showRussianScoreEditor && (
+        <RussianScoreEditor
+          scoreLeft={gameState?.players?.left?.score ?? 0}
+          scoreRight={gameState?.players?.right?.score ?? 0}
+          ballsLeft={russianState?.ballsLeft ?? 0}
+          ballsRight={russianState?.ballsRight ?? 0}
+          target={russianState?.target ?? 8}
+          onApply={handleAdjustRussianState}
+          onClose={() => setShowRussianScoreEditor(false)}
+          disabled={processing}
+        />
       )}
 
       {errorMsg && (
